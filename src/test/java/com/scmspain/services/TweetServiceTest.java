@@ -31,6 +31,29 @@ public class TweetServiceTest {
         verify(entityManager).persist(any(Tweet.class));
     }
 
+    /*
+     COMMENTS JGOMEZ: Added new tests to verify the Publisher and Text validation in the Service
+      */
+    @Test(expected = IllegalArgumentException.class)
+    public void shouldThrowAnExceptionWhenPublisherIsNull() throws Exception {
+        tweetService.publishTweet(null, "Text");
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void shouldThrowAnExceptionWhenPublisherIsEmpty() throws Exception {
+        tweetService.publishTweet("", "Text");
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void shouldThrowAnExceptionWhenTweetIsNull() throws Exception {
+        tweetService.publishTweet("Publisher", null);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void shouldThrowAnExceptionWhenTweetIsEmpty() throws Exception {
+        tweetService.publishTweet("Publisher", "");
+    }
+
     @Test(expected = IllegalArgumentException.class)
     public void shouldThrowAnExceptionWhenTweetLengthIsInvalid() throws Exception {
         tweetService.publishTweet("Pirate", "LeChuck? He's the guy that went to the Governor's for dinner and never wanted to leave. He fell for her in a big way, but she told him to drop dead. So he did. Then things really got ugly.");

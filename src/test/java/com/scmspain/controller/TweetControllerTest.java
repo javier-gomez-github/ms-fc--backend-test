@@ -36,7 +36,7 @@ public class TweetControllerTest {
     }
 
     @Test
-    public void shouldReturn200WhenInsertingAValidTweet() throws Exception {
+    public void shouldReturn201WhenInsertingAValidTweet() throws Exception {
         mockMvc.perform(newTweet("Prospect", "Breaking the law"))
             .andExpect(status().is(201));
     }
