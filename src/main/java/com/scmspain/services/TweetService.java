@@ -21,16 +21,7 @@ import java.util.regex.Pattern;
 public class TweetService {
     private EntityManager entityManager;
     private MetricWriter metricWriter;
-    private final static Pattern URL_PATTERN = Pattern.compile("\\b(((ht|f)tp(s?)\\:\\/\\/|~\\/|\\/)|www.)" +
-            "(\\w+:\\w+@)?(([-\\w]+\\.)+(com|org|net|gov" +
-            "|mil|biz|info|mobi|name|aero|jobs|museum" +
-            "|travel|[a-z]{2}))(:[\\d]{1,5})?" +
-            "(((\\/([-\\w~!$+|.,=]|%[a-f\\d]{2})+)+|\\/)+|\\?|#)?" +
-            "((\\?([-\\w~!$+|.,*:]|%[a-f\\d{2}])+=?" +
-            "([-\\w~!$+|.,*:=]|%[a-f\\d]{2})*)" +
-            "(&(?:[-\\w~!$+|.,*:]|%[a-f\\d{2}])+=?" +
-            "([-\\w~!$+|.,*:=]|%[a-f\\d]{2})*)*)*" +
-            "(#([-\\w~!$+|.,*:=]|%[a-f\\d]{2})*)?\\b");
+    private final static Pattern URL_PATTERN = Pattern.compile("[-a-zA-Z0-9@:%_\\+.~#?&//=]{2,256}\\.[a-z]{2,4}\\b(\\/[-a-zA-Z0-9@:%_\\+.~#?&//=]*)?");
 
     public TweetService(EntityManager entityManager, MetricWriter metricWriter) {
         this.entityManager = entityManager;
@@ -71,6 +62,7 @@ public class TweetService {
     }
 
     private void saveLinks(Long id, Matcher matcher) {
+        // reset matcher to count links again
         matcher.reset();
         // while has links
         while (matcher.find()) {
@@ -82,8 +74,8 @@ public class TweetService {
     }
 
     private String getTextWithoutLinks(String text, Matcher matcher) {
+        // reset matcher to count links again
         matcher.reset();
-        // text has links?
         final StringBuffer textWithoutLinks = new StringBuffer(text);
         while (matcher.find()) {
             String url = matcher.group();
@@ -113,13 +105,9 @@ public class TweetService {
     */
     public Tweet getTweet(Long tweetIdProvided) {
         Tweet tweet = this.entityManager.find(Tweet.class, tweetIdProvided);
-        List<TweetLink> tweetLinkList = new ArrayList<>();
-        TypedQuery<Long> query = this.entityManager.createQuery("SELECT id FROM TweetLink WHERE tweetId = " + tweetIdProvided, Long.class);
-        List<Long> tweetLinkIds = query.getResultList();
-        for (Long tweetLinkId : tweetLinkIds) {
-            tweetLinkList.add(getTweetLink(tweetLinkId));
-        }
-        return !tweetLinkList.isEmpty() ? buildTweetWithLinks(tweet, tweetLinkList) : tweet;
+        TypedQuery<TweetLink> query = this.entityManager.createQuery("FROM TweetLink WHERE tweetId = " + tweetIdProvided, TweetLink.class);
+        List<TweetLink> tweetLinks = query.getResultList();
+        return !tweetLinks.isEmpty() ? buildTweetWithLinks(tweet, tweetLinks) : tweet;
     }
 
     private Tweet buildTweetWithLinks(Tweet tweet, List<TweetLink> tweetLinkList) {
@@ -129,15 +117,6 @@ public class TweetService {
         }
         tweet.setRawTextWithLinks(stringBuffer.toString());
         return tweet;
-    }
-
-    /**
-     Recover tweet link from repository
-     Parameter - id - id of the Tweet link to retrieve
-     Result - retrieved Tweet Link
-     */
-    public TweetLink getTweetLink(Long id) {
-        return this.entityManager.find(TweetLink.class, id);
     }
 
     /**

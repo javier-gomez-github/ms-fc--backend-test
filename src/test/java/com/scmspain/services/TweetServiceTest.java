@@ -13,6 +13,7 @@ import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 public class TweetServiceTest {
     private EntityManager entityManager;
@@ -36,10 +37,22 @@ public class TweetServiceTest {
 
     @Test
     public void shouldInsertANewTweetWithLinks() throws Exception {
-        tweetService.publishTweet("Publisher", "First link is: https://github.com/javier-gomez-github/ms-fc--backend-test/commit/fcb68b783ac939fe5d41528cd2f81237e3cc112b12121212212111111111212121212121 and the second is: https://github.com/javier-gomez-github/ms-fc--backend-test/commit/fcb68b783ac939fe5d41528cd2f81237e3cc112b1212121221211111111121212121212122");
+        tweetService.publishTweet("Publisher", "First link is: https://github.com/javier-gomez-github/ms-fc--backend-test/commit/fcb68b783ac939fe5d41528cd2f81237e3cc112b12121212212111111111212121212121 and the second is: https://github.cn/javier-gomez-github/ms-fc--backend-test/commit/fcb68b783ac939fe5d41528cd2f81237e3cc112b1212121221211111111121212121212122");
 
         verify(entityManager, times(3)).persist(any(Tweet.class));
         verify(entityManager, atLeast(2)).persist(any(TweetLink.class));
+    }
+
+    @Test
+    public void shouldDiscardATweet() throws Exception {
+        Tweet tweet = new Tweet("Publisher", "Text");
+        tweetService.publishTweet(tweet.getPublisher(), tweet.getTweet());
+
+        when(entityManager.find(Tweet.class, 1L)).thenReturn(tweet);
+
+        tweetService.discardTweet(1L);
+
+        verify(entityManager, times(2)).persist(any(Tweet.class));
     }
 
     @Test(expected = IllegalArgumentException.class)

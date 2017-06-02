@@ -47,9 +47,10 @@ public class TweetControllerTest {
     public void shouldReturn201WhenInsertingAValidTweetWithMultipleLinks() throws Exception {
         String id = mockMvc.perform(newTweet("Publisher", "First link is: https://github.com/javier-gomez-github/ms-fc--backend-test/commit/fcb68b783ac939fe5d41528cd2f81237e3cc112b12121212212111111111212121212121 and the second is: https://github.com/javier-gomez-github/ms-fc--backend-test/commit/fcb68b783ac939fe5d41528cd2f81237e3cc112b1212121221211111111121212121212122"))
                 .andExpect(status().is(201)).andReturn().getResponse().getContentAsString();
-        String tweetAsString = mockMvc.perform(get("/tweet", Long.valueOf(id))).andExpect(status().is(200))
+        String tweetsAsString = mockMvc.perform(get("/tweet", Long.valueOf(id))).andExpect(status().is(200))
                 .andReturn().getResponse().getContentAsString();
-        List<Tweet> tweets = new ObjectMapper().readValue(tweetAsString, new TypeReference<List<Tweet>>(){});
+        // using TypeReference (Jackson) to parse the result into a list of Tweet objects
+        List<Tweet> tweets = new ObjectMapper().readValue(tweetsAsString, new TypeReference<List<Tweet>>(){});
         assertThat(tweets.get(0).getRawTextWithLinks()).isEqualTo("First link is: https://github.com/javier-gomez-github/ms-fc--backend-test/commit/fcb68b783ac939fe5d41528cd2f81237e3cc112b12121212212111111111212121212121 and the second is: https://github.com/javier-gomez-github/ms-fc--backend-test/commit/fcb68b783ac939fe5d41528cd2f81237e3cc112b1212121221211111111121212121212122");
     }
 
@@ -96,15 +97,13 @@ public class TweetControllerTest {
         // discard tweet 1
         mockMvc.perform(discardTweet(Long.valueOf(id1))).andExpect(status().is(200));
 
+        // get discarded tweets (ordered by date)
         MvcResult getResult = mockMvc.perform(get("/discarded"))
                 .andExpect(status().is(200))
                 .andReturn();
-
         String content = getResult.getResponse().getContentAsString();
-
+        // using TypeReference (Jackson) to parse the result into a list of Tweet objects
         List<Tweet> result = new ObjectMapper().readValue(content, new TypeReference<List<Tweet>>(){});
-        // take into account the discarded tweet at shouldReturn200WhenDiscardingATweet()
-        assertThat(result.size()).isEqualTo(2);
         assertThat(result.get(0).getId()).isEqualTo(Long.valueOf(id1));
     }
 
