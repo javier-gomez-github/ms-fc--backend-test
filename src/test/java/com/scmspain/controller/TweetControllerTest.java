@@ -47,11 +47,12 @@ public class TweetControllerTest {
     public void shouldReturn201WhenInsertingAValidTweetWithMultipleLinks() throws Exception {
         String id = mockMvc.perform(newTweet("Publisher", "First link is: https://github.com/javier-gomez-github/ms-fc--backend-test/commit/fcb68b783ac939fe5d41528cd2f81237e3cc112b12121212212111111111212121212121 and the second is: https://github.com/javier-gomez-github/ms-fc--backend-test/commit/fcb68b783ac939fe5d41528cd2f81237e3cc112b1212121221211111111121212121212122"))
                 .andExpect(status().is(201)).andReturn().getResponse().getContentAsString();
+
         String tweetsAsString = mockMvc.perform(get("/tweet", Long.valueOf(id))).andExpect(status().is(200))
                 .andReturn().getResponse().getContentAsString();
         // using TypeReference (Jackson) to parse the result into a list of Tweet objects
         List<Tweet> tweets = new ObjectMapper().readValue(tweetsAsString, new TypeReference<List<Tweet>>(){});
-        assertThat(tweets.get(0).getRawTextWithLinks()).isEqualTo("First link is: https://github.com/javier-gomez-github/ms-fc--backend-test/commit/fcb68b783ac939fe5d41528cd2f81237e3cc112b12121212212111111111212121212121 and the second is: https://github.com/javier-gomez-github/ms-fc--backend-test/commit/fcb68b783ac939fe5d41528cd2f81237e3cc112b1212121221211111111121212121212122");
+        assertThat(tweets.get(0).getTweet()).isEqualTo("First link is: https://github.com/javier-gomez-github/ms-fc--backend-test/commit/fcb68b783ac939fe5d41528cd2f81237e3cc112b12121212212111111111212121212121 and the second is: https://github.com/javier-gomez-github/ms-fc--backend-test/commit/fcb68b783ac939fe5d41528cd2f81237e3cc112b1212121221211111111121212121212122");
     }
 
     @Test

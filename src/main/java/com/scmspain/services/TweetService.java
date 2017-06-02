@@ -98,24 +98,12 @@ public class TweetService {
         else throw new NotFoundException("Tweet with id " + tweetId.toString() + " does not exist in the Database");
     }
 
-    /**
-      Recover tweet from repository
-      Parameter - id - id of the Tweet to retrieve
-      Result - retrieved Tweet
-    */
-    public Tweet getTweet(Long tweetIdProvided) {
-        Tweet tweet = this.entityManager.find(Tweet.class, tweetIdProvided);
-        TypedQuery<TweetLink> query = this.entityManager.createQuery("FROM TweetLink WHERE tweetId = " + tweetIdProvided, TweetLink.class);
-        List<TweetLink> tweetLinks = query.getResultList();
-        return !tweetLinks.isEmpty() ? buildTweetWithLinks(tweet, tweetLinks) : tweet;
-    }
-
     private Tweet buildTweetWithLinks(Tweet tweet, List<TweetLink> tweetLinkList) {
         StringBuffer stringBuffer = new StringBuffer(tweet.getTweet());
         for (TweetLink tweetLink : tweetLinkList) {
             stringBuffer.insert(tweetLink.getPosition(), tweetLink.getUrl());
         }
-        tweet.setRawTextWithLinks(stringBuffer.toString());
+        tweet.setTweet(stringBuffer.toString());
         return tweet;
     }
 
@@ -126,11 +114,9 @@ public class TweetService {
     public List<Tweet> listAllTweets() {
         List<Tweet> result = new ArrayList<Tweet>();
         this.metricWriter.increment(new Delta<Number>("times-queried-tweets", 1));
-        TypedQuery<Long> query = this.entityManager.createQuery("SELECT id FROM Tweet AS tweetId WHERE pre2015MigrationStatus<>99 AND discarded = false ORDER BY date DESC", Long.class);
-        List<Long> ids = query.getResultList();
-        for (Long id : ids) {
-            result.add(getTweet(id));
-        }
+        TypedQuery<Tweet> query = this.entityManager.createQuery("FROM Tweet AS tweetId WHERE pre2015MigrationStatus<>99 AND discarded = false ORDER BY date DESC", Tweet.class);
+        List<Tweet> tweets = query.getResultList();
+        addTweetLinks(result, tweets);
         return result;
     }
 
@@ -141,11 +127,19 @@ public class TweetService {
     public List<Tweet> listAllDiscardedTweets() {
         List<Tweet> result = new ArrayList<Tweet>();
         this.metricWriter.increment(new Delta<Number>("times-queried-tweets", 1));
-        TypedQuery<Long> query = this.entityManager.createQuery("SELECT id FROM Tweet AS tweetId WHERE pre2015MigrationStatus<>99 AND discarded = true ORDER BY discardedDate DESC", Long.class);
-        List<Long> ids = query.getResultList();
-        for (Long id : ids) {
-            result.add(getTweet(id));
-        }
+        TypedQuery<Tweet> query = this.entityManager.createQuery("FROM Tweet AS tweetId WHERE pre2015MigrationStatus<>99 AND discarded = true ORDER BY discardedDate DESC", Tweet.class);
+        List<Tweet> tweets = query.getResultList();
+        addTweetLinks(result, tweets);
         return result;
+    }
+
+    private void addTweetLinks(List<Tweet> result, List<Tweet> tweets) {
+        for (Tweet tweet : tweets) {
+            // evict all loaded instances before adding the Tweet Links
+            this.entityManager.clear();
+            TypedQuery<TweetLink> queryLinks = this.entityManager.createQuery("FROM TweetLink WHERE tweetId = " + tweet.getId(), TweetLink.class);
+            List<TweetLink> tweetLinks = queryLinks.getResultList();
+            result.add(!tweetLinks.isEmpty() ? buildTweetWithLinks(tweet, tweetLinks) : tweet);
+        }
     }
 }

@@ -1,12 +1,15 @@
 package com.scmspain.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
-import javax.persistence.Transient;
 import java.util.Date;
 
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 @Entity
 public class Tweet {
     @Id
@@ -16,14 +19,15 @@ public class Tweet {
     private String publisher;
     @Column(nullable = false, length = 140)
     private String tweet;
-    @Transient
-    private String rawTextWithLinks;
     @Column (nullable=true)
     private Long pre2015MigrationStatus = 0L;
+    @JsonIgnore
     @Column (nullable=false)
     private Date date;
+    @JsonIgnore
     @Column (nullable=false)
     private boolean discarded = false;
+    @JsonIgnore
     @Column (nullable=true)
     private Date discardedDate;
 
@@ -90,14 +94,6 @@ public class Tweet {
 
     public void setDiscardedDate(Date discardedDate) {
         this.discardedDate = discardedDate;
-    }
-
-    public String getRawTextWithLinks() {
-        return rawTextWithLinks;
-    }
-
-    public void setRawTextWithLinks(String rawTextWithLinks) {
-        this.rawTextWithLinks = rawTextWithLinks;
     }
 
 //    @Override
