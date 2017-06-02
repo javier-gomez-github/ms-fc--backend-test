@@ -1,6 +1,7 @@
 package com.scmspain.services;
 
 import com.scmspain.entities.Tweet;
+import com.scmspain.entities.TweetLink;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.boot.actuate.metrics.writer.MetricWriter;
@@ -8,7 +9,9 @@ import org.springframework.boot.actuate.metrics.writer.MetricWriter;
 import javax.persistence.EntityManager;
 
 import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 public class TweetServiceTest {
@@ -31,9 +34,14 @@ public class TweetServiceTest {
         verify(entityManager).persist(any(Tweet.class));
     }
 
-    /*
-     COMMENTS JGOMEZ: Added new tests to verify the Publisher and Text validation in the Service
-      */
+    @Test
+    public void shouldInsertANewTweetWithLinks() throws Exception {
+        tweetService.publishTweet("Publisher", "First link is: https://github.com/javier-gomez-github/ms-fc--backend-test/commit/fcb68b783ac939fe5d41528cd2f81237e3cc112b12121212212111111111212121212121 and the second is: https://github.com/javier-gomez-github/ms-fc--backend-test/commit/fcb68b783ac939fe5d41528cd2f81237e3cc112b1212121221211111111121212121212122");
+
+        verify(entityManager, times(3)).persist(any(Tweet.class));
+        verify(entityManager, atLeast(2)).persist(any(TweetLink.class));
+    }
+
     @Test(expected = IllegalArgumentException.class)
     public void shouldThrowAnExceptionWhenPublisherIsNull() throws Exception {
         tweetService.publishTweet(null, "Text");

@@ -4,6 +4,7 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
+import javax.persistence.Transient;
 import java.util.Date;
 
 @Entity
@@ -15,11 +16,10 @@ public class Tweet {
     private String publisher;
     @Column(nullable = false, length = 140)
     private String tweet;
+    @Transient
+    private String rawTextWithLinks;
     @Column (nullable=true)
     private Long pre2015MigrationStatus = 0L;
-    /*
-     COMMENTS JGOMEZ: New attribute Date
-      */
     @Column (nullable=false)
     private Date date;
     @Column (nullable=false)
@@ -30,9 +30,6 @@ public class Tweet {
     public Tweet() {
     }
 
-    /*
-     COMMENTS JGOMEZ: New constructor with parameters to initialize the Tweet object
-      */
     public Tweet(String publisher, String text) {
         this.publisher = publisher;
         this.tweet = text;
@@ -95,50 +92,54 @@ public class Tweet {
         this.discardedDate = discardedDate;
     }
 
-    /*
-     COMMENTS JGOMEZ: Added methods equals, hashCode and toString
-      */
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        Tweet tweet1 = (Tweet) o;
-
-        if (id != null ? !id.equals(tweet1.id) : tweet1.id != null) return false;
-        if (publisher != null ? !publisher.equals(tweet1.publisher) : tweet1.publisher != null) return false;
-        if (tweet != null ? !tweet.equals(tweet1.tweet) : tweet1.tweet != null) return false;
-        if (pre2015MigrationStatus != null ? !pre2015MigrationStatus.equals(tweet1.pre2015MigrationStatus) : tweet1.pre2015MigrationStatus != null) {
-            return false;
-        }
-        if (date != null ? !date.equals(tweet1.date) : tweet1.date != null) return false;
-        if (discarded != tweet1.discarded) return false;
-        return discardedDate != null ? discardedDate.equals(tweet1.discardedDate) : tweet1.discardedDate == null;
+    public String getRawTextWithLinks() {
+        return rawTextWithLinks;
     }
 
-    @Override
-    public int hashCode() {
-        int result = id != null ? id.hashCode() : 0;
-        result = 31 * result + (publisher != null ? publisher.hashCode() : 0);
-        result = 31 * result + (tweet != null ? tweet.hashCode() : 0);
-        result = 31 * result + (pre2015MigrationStatus != null ? pre2015MigrationStatus.hashCode() : 0);
-        result = 31 * result + (date != null ? date.hashCode() : 0);
-        result = 31 * result + (discarded ? 1 : 0);
-        result = 31 * result + (discardedDate != null ? discardedDate.hashCode() : 0);
-        return result;
+    public void setRawTextWithLinks(String rawTextWithLinks) {
+        this.rawTextWithLinks = rawTextWithLinks;
     }
 
-    @Override
-    public String toString() {
-        return "Tweet{" +
-                "id=" + id +
-                ", publisher='" + publisher + '\'' +
-                ", tweet='" + tweet + '\'' +
-                ", pre2015MigrationStatus=" + pre2015MigrationStatus +
-                ", date=" + date +
-                ", discarded=" + discarded +
-                ", discardedDate=" + discardedDate +
-                '}';
-    }
+//    @Override
+//    public boolean equals(Object o) {
+//        if (this == o) return true;
+//        if (o == null || getClass() != o.getClass()) return false;
+//
+//        Tweet tweet1 = (Tweet) o;
+//
+//        if (id != null ? !id.equals(tweet1.id) : tweet1.id != null) return false;
+//        if (publisher != null ? !publisher.equals(tweet1.publisher) : tweet1.publisher != null) return false;
+//        if (tweet != null ? !tweet.equals(tweet1.tweet) : tweet1.tweet != null) return false;
+//        if (pre2015MigrationStatus != null ? !pre2015MigrationStatus.equals(tweet1.pre2015MigrationStatus) : tweet1.pre2015MigrationStatus != null) {
+//            return false;
+//        }
+//        if (date != null ? !date.equals(tweet1.date) : tweet1.date != null) return false;
+//        if (discarded != tweet1.discarded) return false;
+//        return discardedDate != null ? discardedDate.equals(tweet1.discardedDate) : tweet1.discardedDate == null;
+//    }
+//
+//    @Override
+//    public int hashCode() {
+//        int result = id != null ? id.hashCode() : 0;
+//        result = 31 * result + (publisher != null ? publisher.hashCode() : 0);
+//        result = 31 * result + (tweet != null ? tweet.hashCode() : 0);
+//        result = 31 * result + (pre2015MigrationStatus != null ? pre2015MigrationStatus.hashCode() : 0);
+//        result = 31 * result + (date != null ? date.hashCode() : 0);
+//        result = 31 * result + (discarded ? 1 : 0);
+//        result = 31 * result + (discardedDate != null ? discardedDate.hashCode() : 0);
+//        return result;
+//    }
+//
+//    @Override
+//    public String toString() {
+//        return "Tweet{" +
+//                "id=" + id +
+//                ", publisher='" + publisher + '\'' +
+//                ", tweet='" + tweet + '\'' +
+//                ", pre2015MigrationStatus=" + pre2015MigrationStatus +
+//                ", date=" + date +
+//                ", discarded=" + discarded +
+//                ", discardedDate=" + discardedDate +
+//                '}';
+//    }
 }
