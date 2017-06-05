@@ -36,10 +36,10 @@ public class TweetDao {
         return typedQuery.getResultList();
     }
 
-    public List<TweetLink> getTweetLinksWithQuery(String query) {
+    public List<TweetLink> getTweetLinks(Long tweetId) {
         // evict all loaded instances before getting the Tweet Links
         this.entityManager.clear();
-        TypedQuery<TweetLink> typedQuery = this.entityManager.createQuery(query, TweetLink.class);
+        TypedQuery<TweetLink> typedQuery = this.entityManager.createQuery("FROM TweetLink WHERE tweetId = " + tweetId, TweetLink.class);
         return typedQuery.getResultList();
     }
 

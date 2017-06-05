@@ -131,7 +131,7 @@ public class TweetService {
 
     private void addTweetLinks(List<Tweet> result, List<Tweet> tweets) {
         for (Tweet tweet : tweets) {
-            List<TweetLink> tweetLinks = this.tweetDao.getTweetLinksWithQuery("FROM TweetLink WHERE tweetId = " + tweet.getId());
+            List<TweetLink> tweetLinks = this.tweetDao.getTweetLinks(tweet.getId());
             result.add(!tweetLinks.isEmpty() ? buildTweetWithLinks(tweet, tweetLinks) : tweet);
         }
     }
