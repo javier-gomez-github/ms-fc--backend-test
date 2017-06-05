@@ -1,5 +1,6 @@
 package com.scmspain.services;
 
+import com.scmspain.dao.TweetDao;
 import com.scmspain.entities.Tweet;
 import com.scmspain.entities.TweetLink;
 import com.scmspain.exception.NotFoundException;
@@ -7,8 +8,6 @@ import org.springframework.boot.actuate.metrics.writer.Delta;
 import org.springframework.boot.actuate.metrics.writer.MetricWriter;
 import org.springframework.stereotype.Service;
 
-import javax.persistence.EntityManager;
-import javax.persistence.TypedQuery;
 import javax.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.Date;
@@ -19,13 +18,13 @@ import java.util.regex.Pattern;
 @Service
 @Transactional
 public class TweetService {
-    private EntityManager entityManager;
+    private TweetDao tweetDao;
     private MetricWriter metricWriter;
     private final static Pattern URL_PATTERN = Pattern.compile("[-a-zA-Z0-9@:%_\\+.~#?&//=]{2,256}\\.[a-z]{2,4}\\b(\\/[-a-zA-Z0-9@:%_\\+.~#?&//=]*)?");
 
-    public TweetService(EntityManager entityManager, MetricWriter metricWriter) {
-        this.entityManager = entityManager;
+    public TweetService(MetricWriter metricWriter, TweetDao tweetDao) {
         this.metricWriter = metricWriter;
+        this.tweetDao = tweetDao;
     }
 
     /**
@@ -45,8 +44,7 @@ public class TweetService {
 
         Tweet tweet = new Tweet(publisher, text);
         this.metricWriter.increment(new Delta<Number>("published-tweets", 1));
-        this.entityManager.persist(tweet);
-        this.entityManager.flush();
+        this.tweetDao.save(tweet);
         // store links
         saveLinks(tweet.getId(), matcher);
         return tweet.getId();
@@ -69,7 +67,7 @@ public class TweetService {
             int position = matcher.start();
             String url = matcher.group();
             TweetLink link = new TweetLink(id, url, position);
-            entityManager.persist(link);
+            this.tweetDao.save(link);
         }
     }
 
@@ -89,11 +87,11 @@ public class TweetService {
      Parameter - tweetId - the Id of the Tweet
      */
     public void discardTweet(Long tweetId) {
-        Tweet tweet = this.entityManager.find(Tweet.class, tweetId);
+        Tweet tweet = this.tweetDao.getTweet(tweetId);
         if (null != tweet) {
             tweet.setDiscarded(true);
             tweet.setDiscardedDate(new Date());
-            this.entityManager.persist(tweet);
+            this.tweetDao.update(tweet);
         }
         else throw new NotFoundException("Tweet with id " + tweetId.toString() + " does not exist in the Database");
     }
@@ -114,8 +112,7 @@ public class TweetService {
     public List<Tweet> listAllTweets() {
         List<Tweet> result = new ArrayList<Tweet>();
         this.metricWriter.increment(new Delta<Number>("times-queried-tweets", 1));
-        TypedQuery<Tweet> query = this.entityManager.createQuery("FROM Tweet AS tweetId WHERE pre2015MigrationStatus<>99 AND discarded = false ORDER BY date DESC", Tweet.class);
-        List<Tweet> tweets = query.getResultList();
+        List<Tweet> tweets = this.tweetDao.getTweetsWithQuery("FROM Tweet AS tweetId WHERE pre2015MigrationStatus<>99 AND discarded = false ORDER BY date DESC");
         addTweetLinks(result, tweets);
         return result;
     }
@@ -127,18 +124,14 @@ public class TweetService {
     public List<Tweet> listAllDiscardedTweets() {
         List<Tweet> result = new ArrayList<Tweet>();
         this.metricWriter.increment(new Delta<Number>("times-queried-tweets", 1));
-        TypedQuery<Tweet> query = this.entityManager.createQuery("FROM Tweet AS tweetId WHERE pre2015MigrationStatus<>99 AND discarded = true ORDER BY discardedDate DESC", Tweet.class);
-        List<Tweet> tweets = query.getResultList();
+        List<Tweet> tweets = this.tweetDao.getTweetsWithQuery("FROM Tweet AS tweetId WHERE pre2015MigrationStatus<>99 AND discarded = true ORDER BY discardedDate DESC");;
         addTweetLinks(result, tweets);
         return result;
     }
 
     private void addTweetLinks(List<Tweet> result, List<Tweet> tweets) {
         for (Tweet tweet : tweets) {
-            // evict all loaded instances before adding the Tweet Links
-            this.entityManager.clear();
-            TypedQuery<TweetLink> queryLinks = this.entityManager.createQuery("FROM TweetLink WHERE tweetId = " + tweet.getId(), TweetLink.class);
-            List<TweetLink> tweetLinks = queryLinks.getResultList();
+            List<TweetLink> tweetLinks = this.tweetDao.getTweetLinksWithQuery("FROM TweetLink WHERE tweetId = " + tweet.getId());
             result.add(!tweetLinks.isEmpty() ? buildTweetWithLinks(tweet, tweetLinks) : tweet);
         }
     }
