@@ -112,7 +112,7 @@ public class TweetService {
     public List<Tweet> listAllTweets() {
         List<Tweet> result = new ArrayList<Tweet>();
         this.metricWriter.increment(new Delta<Number>("times-queried-tweets", 1));
-        List<Tweet> tweets = this.tweetDao.getTweetsWithQuery("FROM Tweet AS tweetId WHERE pre2015MigrationStatus<>99 AND discarded = false ORDER BY date DESC");
+        List<Tweet> tweets = this.tweetDao.getTweets();
         addTweetLinks(result, tweets);
         return result;
     }
@@ -124,7 +124,7 @@ public class TweetService {
     public List<Tweet> listAllDiscardedTweets() {
         List<Tweet> result = new ArrayList<Tweet>();
         this.metricWriter.increment(new Delta<Number>("times-queried-tweets", 1));
-        List<Tweet> tweets = this.tweetDao.getTweetsWithQuery("FROM Tweet AS tweetId WHERE pre2015MigrationStatus<>99 AND discarded = true ORDER BY discardedDate DESC");;
+        List<Tweet> tweets = this.tweetDao.getDiscardedTweets();
         addTweetLinks(result, tweets);
         return result;
     }

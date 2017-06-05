@@ -26,8 +26,13 @@ public class TweetDao {
         return this.entityManager.find(Tweet.class, tweetId);
     }
 
-    public List<Tweet> getTweetsWithQuery(String query) {
-        TypedQuery<Tweet> typedQuery = this.entityManager.createQuery(query, Tweet.class);
+    public List<Tweet> getTweets() {
+        TypedQuery<Tweet> typedQuery = this.entityManager.createQuery("FROM Tweet AS tweetId WHERE pre2015MigrationStatus<>99 AND discarded = false ORDER BY date DESC", Tweet.class);
+        return typedQuery.getResultList();
+    }
+
+    public List<Tweet> getDiscardedTweets() {
+        TypedQuery<Tweet> typedQuery = this.entityManager.createQuery("FROM Tweet AS tweetId WHERE pre2015MigrationStatus<>99 AND discarded = true ORDER BY discardedDate DESC", Tweet.class);
         return typedQuery.getResultList();
     }
 
